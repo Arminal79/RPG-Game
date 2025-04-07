@@ -1,0 +1,111 @@
+import random
+
+# Definition der Räume
+rooms = {
+    'Hall': {'s': 'Kitchen', 'o': 'Dining Room', 'w': 'Library'},
+    'Kitchen': {'n': 'Hall'},
+    'Dining Room': {'w': 'Hall', 's': 'Garden', 'o': 'Office'},
+    'Garden': {'n': 'Dining Room'},
+    'Library': {'o': 'Hall', 's': 'Laboratory', 'item': 'Stift'},
+    'Office': {'w': 'Dining Room', 's': 'Laboratory'},
+    'Laboratory': {'n': 'Library', 'nw': 'Office', 'item': 'Stein'}
+}
+
+# Liste möglicher Items
+items = ['Schlüssel', 'Trank', 'Stift', 'Stein']
+
+# Setze das Monster in einen zufälligen Raum (außer Hall)
+possible_rooms = list(rooms.keys())
+possible_rooms.remove('Hall')
+monster_room = random.choice(possible_rooms)
+
+# Verteile die Items zufällig in beliebigen Räumen
+item_locations = {}
+for item in items:
+    room = random.choice(list(rooms.keys()))
+    item_locations[room] = item
+
+# Spieler-Startposition und Inventar
+current_room = 'Hall'
+inventory = []
+
+def show_status():
+    """Zeigt den aktuellen Status des Spiels."""
+    print("\n---------------------------")
+    print(f"Du bist im {current_room}")
+
+    # Zeige mögliche Richtungen mit Zielräumen
+    possible_directions = ", ".join([f"{key.upper()} ({rooms[current_room][key]})" for key in rooms[current_room].keys()])
+    print(f"Mögliche Richtungen: {possible_directions}")
+
+    if 'item' in rooms[current_room]:
+        print(f"Hier gibt es: {rooms[current_room]['item']}")
+    print(f"Inventar: {inventory}")
+    print("---------------------------\n")
+
+def get_input():
+    """Fragt den Spieler nach einer Eingabe und verarbeitet sie."""
+    move = input(">").strip().lower().split()
+
+    if not move:
+        return None, None
+
+    if move[0] in ["g", "go"] and len(move) > 1:
+        return "go", move[1]  # Bewegung
+    elif move[0] in ["n", "nehmen"]:
+        return "nehmen", None  # Item aufnehmen
+    elif move[0] == "exit":
+        return "exit", None  # Spiel beenden
+
+    return None, None  # Ungültige Eingabe
+
+# Spielanleitung
+name=input("Wie ist dein Name?")
+print(f"Hallo",name,"und herzlich Weillkommen zu deinem RPG-Game")
+print("""
+- Befehle: 'g n' (gehe Norden), 'g s' (gehe Süden), 'g o' (gehe Osten), 'g w' (gehe Westen)
+- 'n' oder 'nehmen' zum Aufheben von Gegenständen, 'exit' zum Beenden.
+
+""")
+
+# Spielschleife
+while True:
+    show_status()
+
+    action, value = get_input()
+
+    if action == "exit":
+        print("Danke fürs Spielen!")
+        break
+
+    elif action == "go":
+        if value in rooms[current_room]:
+            current_room = rooms[current_room][value]
+
+            # Prüfe, ob der Spieler das Monster getroffen hat
+            if current_room == monster_room:
+                print("Oh nein! Ein Monster hat dich erwischt! Game Over.")
+                break
+        else:
+            print("Diese Richtung ist nicht möglich!")
+
+    elif action == "nehmen":
+        if 'item' in rooms[current_room]:
+            item = rooms[current_room]['item']
+            inventory.append(item)
+            print(f"Du hast {item} aufgenommen!")
+            del rooms[current_room]['item']
+        else:
+            print("Hier gibt es nichts zu nehmen.")
+
+    # Siegesbedingungen
+    if current_room == 'Garden' and 'Schlüssel' in inventory and 'Trank' in inventory:
+        print("Du hast erfolgreich das Haus verlassen! DU GEWINNST!")
+        break
+
+    if current_room == 'Laboratory' and 'Schwert' in inventory and 'Stein' in inventory:
+        print("Du hast einen geheimen Weg entdeckt! DU GEWINNST!")
+        break
+
+    else:
+        print("Ungültige Eingabe! Bitte benutze 'g n', 'g s', 'g o', 'g w' oder 'n'.")
